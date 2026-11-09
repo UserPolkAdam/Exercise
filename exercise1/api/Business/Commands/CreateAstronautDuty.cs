@@ -43,7 +43,7 @@ namespace StargateAPI.Business.Commands
                 throw new BadHttpRequestException("Bad Request");
             }
 
-            var verifyNoPreviousDuty = _context.AstronautDuties.FirstOrDefault(z => z.DutyTitle == request.DutyTitle && z.DutyStartDate == request.DutyStartDate);
+            var verifyNoPreviousDuty = _context.AstronautDuties.FirstOrDefault(z => z.DutyTitle == request.DutyTitle && z.DutyStartDate == request.DutyStartDate && z.PersonId == person.Id);
 
             if (verifyNoPreviousDuty is not null) {
                 _context.LogEntries.Add(new LogEntry()
@@ -55,6 +55,27 @@ namespace StargateAPI.Business.Commands
                 });
                 _context.SaveChanges();
                 throw new BadHttpRequestException("Bad Request");
+            }
+
+            var latestDuty = _context.AstronautDuties
+                .Where(duty => duty.PersonId == person.Id)
+                .OrderByDescending(duty => duty.DutyStartDate)
+                .FirstOrDefault();
+
+            if (latestDuty is not null &&
+                request.DutyStartDate <= latestDuty.DutyStartDate) {
+                _context.LogEntries.Add(new LogEntry
+                {
+                    Description = "CreateAstronautDutyPreProcessor: Duty date must be later than the current duty.",
+                    Exception = "Bad Request",
+                    CreatedDateTime = DateTime.UtcNow,
+                    Success = false
+                });
+
+                _context.SaveChangesAsync(cancellationToken);
+
+                throw new BadHttpRequestException(
+                    "DutyStartDate must be later than the astronaut's current duty start date.");
             }
 
             _context.LogEntries.Add(new LogEntry()
