@@ -8,7 +8,7 @@ namespace StargateAPI.Business.Commands
 {
     public class CreatePerson : IRequest<CreatePersonResult>
     {
-        public required string Name { get; set; } = string.Empty;
+        public required string Name { get { return field; } set { field = value.ToLower(); } }
     }
 
     public class CreatePersonPreProcessor : IRequestPreProcessor<CreatePerson>
@@ -22,7 +22,17 @@ namespace StargateAPI.Business.Commands
         {
             var person = _context.People.AsNoTracking().FirstOrDefault(z => z.Name == request.Name);
 
-            if (person is not null) throw new BadHttpRequestException("Bad Request");
+            if (person is not null) {
+                _context.LogEntries.Add(new LogEntry()
+                {
+                    Description = "CreatePersonPreProcessor: Name already exists.",
+                    Exception = "Bad Request",
+                    CreatedDateTime = DateTime.Now,
+                    Success = false
+                });
+                _context.SaveChanges();
+                throw new BadHttpRequestException("Bad Request");
+            }
 
             return Task.CompletedTask;
         }
@@ -45,6 +55,13 @@ namespace StargateAPI.Business.Commands
                 };
 
                 await _context.People.AddAsync(newPerson);
+                _context.LogEntries.Add(new LogEntry()
+                {
+                    Description = "CreatePersonHandler: Person Created.",
+                    Exception = "",
+                    CreatedDateTime = DateTime.Now,
+                    Success = true
+                });
 
                 await _context.SaveChangesAsync();
 

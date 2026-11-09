@@ -78,6 +78,32 @@ namespace StargateAPI.Migrations
                     b.ToTable("AstronautDuty");
                 });
 
+            modelBuilder.Entity("StargateAPI.Business.Data.LogEntry", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedDateTime")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Exception")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<bool>("Success")
+                    .HasColumnType("INTEGER");
+
+                b.HasKey("Id");
+
+                b.ToTable("LogEntry");
+            });
+
             modelBuilder.Entity("StargateAPI.Business.Data.Person", b =>
                 {
                     b.Property<int>("Id")

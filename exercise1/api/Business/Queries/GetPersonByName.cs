@@ -1,5 +1,5 @@
-﻿using Dapper;
-using MediatR;
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
 using StargateAPI.Controllers;
@@ -23,11 +23,39 @@ namespace StargateAPI.Business.Queries
         {
             var result = new GetPersonByNameResult();
 
-            var query = $"SELECT a.Id as PersonId, a.Name, b.CurrentRank, b.CurrentDutyTitle, b.CareerStartDate, b.CareerEndDate FROM [Person] a LEFT JOIN [AstronautDetail] b on b.PersonId = a.Id WHERE '{request.Name}' = a.Name";
+            var person = await _context.People
+                .AsNoTracking()
+                .Where(person => person.Name == request.Name)
+                .Select(person => new PersonAstronaut
+                {
+                    PersonId = person.Id,
+                    Name = person.Name,
+                    CurrentRank = person.AstronautDetail != null
+                        ? person.AstronautDetail.CurrentRank
+                        : string.Empty,
+                    CurrentDutyTitle = person.AstronautDetail != null
+                        ? person.AstronautDetail.CurrentDutyTitle
+                        : string.Empty,
+                    CareerStartDate = person.AstronautDetail != null
+                        ? person.AstronautDetail.CareerStartDate
+                        : null,
+                    CareerEndDate = person.AstronautDetail != null
+                        ? person.AstronautDetail.CareerEndDate
+                        : null
+                })
+                .FirstOrDefaultAsync(cancellationToken);
 
-            var person = await _context.Connection.QueryAsync<PersonAstronaut>(query);
+            result.Person = person;
 
-            result.Person = person.FirstOrDefault();
+            if (person is null) {
+                return result;
+            }
+
+            result.AstronautDuties = await _context.AstronautDuties
+                .AsNoTracking()
+                .Where(duty => duty.PersonId == person.PersonId)
+                .OrderByDescending(duty => duty.DutyStartDate)
+                .ToListAsync(cancellationToken);
 
             return result;
         }
@@ -36,5 +64,7 @@ namespace StargateAPI.Business.Queries
     public class GetPersonByNameResult : BaseResponse
     {
         public PersonAstronaut? Person { get; set; }
+
+        public List<AstronautDuty> AstronautDuties { get; set; } = new();
     }
 }

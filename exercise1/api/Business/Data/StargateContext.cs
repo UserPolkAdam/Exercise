@@ -9,7 +9,7 @@ namespace StargateAPI.Business.Data
         public DbSet<Person> People { get; set; }
         public DbSet<AstronautDetail> AstronautDetails { get; set; }
         public DbSet<AstronautDuty> AstronautDuties { get; set; }
-
+        public DbSet<LogEntry> LogEntries { get; set; }
         public StargateContext(DbContextOptions<StargateContext> options)
         : base(options)
         {

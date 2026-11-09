@@ -18,20 +18,14 @@ namespace StargateAPI.Controllers
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetPeople()
-        {
-            try
-            {
-                var result = await _mediator.Send(new GetPeople()
-                {
-
-                });
+        public async Task<IActionResult> GetPeople([FromQuery] GetPeople request) {
+            try {
+                var result = await _mediator.Send(request);
 
                 return this.GetResponse(result);
             }
-            catch (Exception ex)
-            {
-                return this.GetResponse(new BaseResponse()
+            catch (Exception ex) {
+                return this.GetResponse(new BaseResponse
                 {
                     Message = ex.Message,
                     Success = false,
@@ -77,6 +71,23 @@ namespace StargateAPI.Controllers
             }
             catch (Exception ex)
             {
+                return this.GetResponse(new BaseResponse()
+                {
+                    Message = ex.Message,
+                    Success = false,
+                    ResponseCode = (int)HttpStatusCode.InternalServerError
+                });
+            }
+
+        }
+
+        [HttpPatch("")]
+        public async Task<IActionResult> UpdatePerson([FromBody] UpdatePerson request) {
+            try {
+                var result = await _mediator.Send(request);
+                return this.GetResponse(result);
+            }
+            catch (Exception ex) {
                 return this.GetResponse(new BaseResponse()
                 {
                     Message = ex.Message,

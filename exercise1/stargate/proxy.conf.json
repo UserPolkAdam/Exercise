@@ -1,0 +1,9 @@
+{
+  "^/stargate-api(?:/|$)": {
+    "target": "https://localhost:7204",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "warn",
+    "pathRewrite": { "^/stargate-api": "" }
+  }
+}
